@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import Link from 'next/link'
+import { generateSlug } from '@/lib/utils'
 
 type Entry = {
   task_type: string
@@ -88,7 +90,11 @@ export default function ProsjektDetalj() {
               const stats = getStats(type)
               return (
                 <tr key={i} className="border-t">
-                  <td className="p-2 font-medium text-blue-600">{type}</td>
+                  <td className="p-2 font-medium text-blue-600 underline">
+                    <Link href={`/arbeidstype/${generateSlug(type)}`}>
+                    {type}
+                    </Link>
+                    </td>
                   <td className="p-2">{stats.unit}</td>
                   <td className="p-2">{stats.avg}</td>
                   <td className="p-2 text-green-700">{stats.max}</td>

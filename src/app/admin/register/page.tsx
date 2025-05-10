@@ -1,121 +1,155 @@
-'use client'; // Forteller Next.js at dette er en klient-komponent (brukes med hooks)
+'use client'; // Dette er en klient-komponent
 
-import { useEffect, useState } from 'react'; // Importerer React-hooks for tilstand og sideeffekter
-import { createClient } from '@supabase/supabase-js'; // Importer funksjonen for å koble til Supabas
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 
-// Lager en Supabase-klient med miljøvariablene dine (URL og anonym nøkkel)
+// Supabase-klient basert på miljøvariabler
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!, // Supabase-prosjektets URL
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // Supabase-prosjektets anonyme nøkkel
-    );
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-    // Hovedfunksjon som returnerer siden (React-komponent)
-    export default function RegisterPage() {
-        // Tilstand for navn på ansatt som skal legges inn
-        const [employeeName, setEmployeeName] = useState('');
+export default function RegisterPage() {
+  const router = useRouter();
 
-        // Liste over ansatte som hentes fra databasen
-        const [employees, setEmployees] = useState<any[]>([]);
+  // AUTH: Beskytter siden
+  const [loading, setLoading] = useState(true); // Brukes for å vise "laster" til auth er sjekket
 
-        // Tilstand for ny arbeidstype som skal legges inn
-        const [taskName, setTaskName] = useState('');
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      const role = user?.user_metadata?.role;
 
-// Tilstand for enhet (m2, lm, stk)
-const [unit, setUnit] = useState('');
+      if (!user || role !== 'admin') {
+        router.push('/login'); // Ikke logget inn eller ikke admin
+      } else {
+        setLoading(false); // Alt OK – vis siden
+      }
+    };
 
-// Liste over arbeidstyper fra databasen
-const [taskTypes, setTaskTypes] = useState<any[]>([]);
+    checkAuth();
+  }, [router]);
 
-// Funksjon som henter alle ansatte fra databasen
-const fetchEmployees = async () => {
-    const { data, error } = await supabase.from('employees').select('*'); // SELECT * FROM employees
+  if (loading) {
+    return <p className="p-8 text-center">Laster inn...</p>; // Vises mens vi sjekker auth
+  }
+
+  // ---------------------------- //
+  // FRA DITT ORIGINALE REGISTER-UI
+  // ---------------------------- //
+
+  const [employeeName, setEmployeeName] = useState('');
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [taskName, setTaskName] = useState('');
+  const [unit, setUnit] = useState('');
+  const [taskTypes, setTaskTypes] = useState<any[]>([]);
+
+  const fetchEmployees = async () => {
+    const { data, error } = await supabase.from('employees').select('*');
     if (!error && data) {
-        setEmployees(data); // Lagrer data i employees-tilstanded
+      setEmployees(data);
     }
-};
+  };
 
-// Funksjon som henter alle arbeidstyper fra databasen
-const fetchTasksTypes = async () => {
-    const { data, error } = await supabase.from('task_types').select('*'); // SELECT * FROM task_types
+  const fetchTasksTypes = async () => {
+    const { data, error } = await supabase.from('task_types').select('*');
     if (!error && data) {
-        setTaskTypes(data); // Lagrer data i taskTypes-tilstanden
+      setTaskTypes(data);
     }
-};
+  };
 
-// useEffect kjører en gang når siden lastes - henter ansatte og arbeidstyper
-useEffect(() => {
-    fetchEmployees(); // Henter ansatte
+  useEffect(() => {
+    fetchEmployees();
     fetchTasksTypes();
-}, []); // Tom avhengighetsliste = kun ved første lasting
+  }, []);
 
-// Funksjon som kjøres når bruker sender inn skjema for å legge til ansatt
-const handleAddEmployee = async (e: React.FormEvent) => {
-    e.preventDefault(); // Hindrer at siden lastes på nytt
-    if (!employeeName) return; // Gjør ingenting his feltet er tomt
-    const { error } = await supabase.from('employees').insert([{ name: employeeName }]); // Legger til i databasen
-    if (error) alert('Feil ved registrering'); // Viser feilmelding
+  const handleAddEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employeeName) return;
+    const { error } = await supabase.from('employees').insert([{ name: employeeName }]);
+    if (error) alert('Feil ved registrering');
     else {
-        setEmployeeName(''); // Tømmer inputfelt
-        fetchEmployees(); // Henter oppdatert liste
+      setEmployeeName('');
+      fetchEmployees();
     }
-};
+  };
 
-// Funksjon for å legge til en ny arbeidstype
-const handleAddTaskType = async (e: React.FormEvent) => {
-    e.preventDefault(); // Stopper sideoppdatering
-    if (!taskName || !unit) return; // Gjør ingenting hvis felt mangler
-    const { error } = await supabase.from('task_types').insert([{ name: taskName, unit}]); // Legger til i databasen
-    if (error) alert('Feil ved registrering'); // Feilmelding hvis noe går galt
+  const handleAddTaskType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskName || !unit) return;
+    const { error } = await supabase.from('task_types').insert([{ name: taskName, unit }]);
+    if (error) alert('Feil ved registrering');
     else {
-        setTaskName(''); // Tømmer inputfelt
-        setUnit(''); // Tømmer inputfelt
-        fetchTasksTypes(); // Henter oppdatert liste
+      setTaskName('');
+      setUnit('');
+      fetchTasksTypes();
     }
-};
+  };
 
-// Dette er HTML-delen (JSX) som vises i nettleseren
-return (
+  return (
     <div className="p-8 max-w-xl mx-auto">
-        {/* Hovedcontainer med padding og breddebegrensning */}
-    
-    <h1 className="text-2xl font-bold mb-6">Registrering</h1> {/* Tittel */}
+      <h1 className="text-2xl font-bold mb-6">Registrering</h1>
 
-    {/* Skjema for å registrere ny ansatt */}
-    <form onSubmit={handleAddEmployee} className="mb-8">
+      {/* Skjema for ny ansatt */}
+      <form onSubmit={handleAddEmployee} className="mb-8">
         <h2 className="font-semibold mb-2">Ny ansatt</h2>
         <input
-        type="text" // Teksfelt
-        placeholder="Navn" // Hinttekst
-        value={employeeName} // Verdien som vises i input-feltet
-        onChange={(e) => setEmployeeName(e.target.value)} // Oppdaterer tilstand når skriver
-        className="border p-2 w-full mb-2" // Tailwind styling
+          type="text"
+          placeholder="Navn"
+          value={employeeName}
+          onChange={(e) => setEmployeeName(e.target.value)}
+          className="border p-2 w-full mb-2"
         />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-            Legg til ansatt
+          Legg til ansatt
         </button>
-        </form>
+      </form>
 
-        {/* Viser liste over registrerte ansatte */}
-        <div className="mb-8">
-            <h2 className="font-semibold mb-2">Registrerte ansatte</h2>
-            <ul className="list-disc pl-5">
-                {employees.map((emp) => (
-                    <li key={emp.id}>{emp.name}</li> // Viser navnet på hver ansett
-                ))}
-            </ul>
-        </div>
-        
-        {/* Viser liste over registrerte arbeidstyper */}
-        <div>
-            <h2 className="font-semibold mb-2">Arbeidstyper</h2>
-            <ul className="list-disc pl-5">
-                {taskTypes.map((task) => (
-                    <li key={task.id}>
-                        {task.name} ({task.unit}) // Viser arbeidstype og enhet
-                    </li>
-                ))}
-            </ul>
-        </div>
-        </div>
-);
+      {/* Liste over ansatte */}
+      <div className="mb-8">
+        <h2 className="font-semibold mb-2">Registrerte ansatte</h2>
+        <ul className="list-disc pl-5">
+          {employees.map((emp) => (
+            <li key={emp.id}>{emp.name}</li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Skjema for ny arbeidstype */}
+      <form onSubmit={handleAddTaskType} className="mb-8">
+        <h2 className="font-semibold mb-2">Ny arbeidstype</h2>
+        <input
+          type="text"
+          placeholder="Arbeidstype"
+          value={taskName}
+          onChange={(e) => setTaskName(e.target.value)}
+          className="border p-2 w-full mb-2"
+        />
+        <input
+          type="text"
+          placeholder="Enhet (f.eks. m2, lm, stk)"
+          value={unit}
+          onChange={(e) => setUnit(e.target.value)}
+          className="border p-2 w-full mb-2"
+        />
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+          Legg til arbeidstype
+        </button>
+      </form>
+
+      {/* Liste over arbeidstyper */}
+      <div>
+        <h2 className="font-semibold mb-2">Arbeidstyper</h2>
+        <ul className="list-disc pl-5">
+          {taskTypes.map((task) => (
+            <li key={task.id}>
+              {task.name} ({task.unit})
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }

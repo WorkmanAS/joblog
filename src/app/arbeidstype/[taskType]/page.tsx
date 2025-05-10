@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { generateSlug } from '@/lib/utils'
+import Link from 'next/link'
 
 type EfficiencyEntry = {
   id: number
@@ -81,13 +82,17 @@ export default function TaskTypePage() {
             <tr>
               <th className="p-2">Arbeider</th>
               <th className="p-2">Prosjekt</th>
-              <th className="p-2">Hastighet (enhet/time)</th>
+              <th className="p-2">Hastighet</th>
             </tr>
           </thead>
           <tbody>
             {sortedData.map((entry) => (
               <tr key={entry.id} className="border-t">
-                <td className="p-2 font-medium">{entry.employee_name}</td>
+                <td className="p-2 font-medium text-blue-600 underline">
+                  <Link href={`/ansatte/${encodeURIComponent(entry.employee_name)}`}>
+                  {entry.employee_name}
+                  </Link>
+                  </td>
                 <td className="p-2">{entry.project}</td>
                 <td className="p-2">{entry.efficiency.toFixed(2)}</td>
               </tr>

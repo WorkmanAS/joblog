@@ -1,14 +1,47 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
+
+// Create a Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null); 
+
+  // Fetch the current session when the component mounts
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+  
+      if (error) {
+        console.error('Failed to get session:', error.message);
+        return;
+      }
+  
+      // session can be null, so we check before accessing session.user
+      if (session && session.user) {
+        setUser(session.user);
+      } else {
+        setUser(null);
+      }
+    };
+  
+    fetchUser();
+  }, []);
+  
 
   return (
     <nav className="bg-white shadow fixed top-0 left-0 right-0 z-50">
-      {/* Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -29,10 +62,14 @@ export default function Navbar() {
             <Link href="/projects" className="text-gray-700 hover:text-black">
               Projects
             </Link>
-            <Link href="/new-entry" className="text-gray-700 hover:text-black">
-            New Entry
-            </Link>
-            </div>
+
+            {/* Only show this if user is logged in */}
+            {user && (
+              <Link href="/new-entry" className="text-gray-700 hover:text-black">
+                New Entry
+              </Link>
+            )}
+          </div>
 
           {/* Mobile Button */}
           <div className="md:hidden">
@@ -58,7 +95,13 @@ export default function Navbar() {
           <Link href="/projects" className="block py-2 text-gray-700 hover:text-black">
             Projects
           </Link>
-          <Link href="/new-entry" className="text-gray-700 hover:text-black">New Entry</Link>
+
+          {/* Mobile view: show "New Entry" if user is logged in */}
+          {user && (
+            <Link href="/new-entry" className="block py-2 text-gray-700 hover:text-black">
+              New Entry
+            </Link>
+          )}
         </div>
       )}
     </nav>
