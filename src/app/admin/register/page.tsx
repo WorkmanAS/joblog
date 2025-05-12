@@ -1,10 +1,10 @@
-'use client'; // Dette er en klient-komponent
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase-klient basert på miljøvariabler
+// Supabase-klient
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,9 +13,26 @@ const supabase = createClient(
 export default function RegisterPage() {
   const router = useRouter();
 
-  // AUTH: Beskytter siden
-  const [loading, setLoading] = useState(true); // Brukes for å vise "laster" til auth er sjekket
+  // Hooks skal alltid være på toppen
+  const [loading, setLoading] = useState(true);
+  const [employeeName, setEmployeeName] = useState('');
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [taskName, setTaskName] = useState('');
+  const [unit, setUnit] = useState('');
+  const [taskTypes, setTaskTypes] = useState<any[]>([]);
 
+  // Må defineres før bruk
+  const fetchEmployees = async () => {
+    const { data, error } = await supabase.from('employees').select('*');
+    if (!error && data) setEmployees(data);
+  };
+
+  const fetchTasksTypes = async () => {
+    const { data, error } = await supabase.from('task_types').select('*');
+    if (!error && data) setTaskTypes(data);
+  };
+
+  // Sjekk auth
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -23,43 +40,16 @@ export default function RegisterPage() {
       const role = user?.user_metadata?.role;
 
       if (!user || role !== 'admin') {
-        router.push('/login'); // Ikke logget inn eller ikke admin
+        router.push('/login');
       } else {
-        setLoading(false); // Alt OK – vis siden
+        setLoading(false);
       }
     };
 
     checkAuth();
   }, [router]);
 
-  if (loading) {
-    return <p className="p-8 text-center">Laster inn...</p>; // Vises mens vi sjekker auth
-  }
-
-  // ---------------------------- //
-  // FRA DITT ORIGINALE REGISTER-UI
-  // ---------------------------- //
-
-  const [employeeName, setEmployeeName] = useState('');
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [taskName, setTaskName] = useState('');
-  const [unit, setUnit] = useState('');
-  const [taskTypes, setTaskTypes] = useState<any[]>([]);
-
-  const fetchEmployees = async () => {
-    const { data, error } = await supabase.from('employees').select('*');
-    if (!error && data) {
-      setEmployees(data);
-    }
-  };
-
-  const fetchTasksTypes = async () => {
-    const { data, error } = await supabase.from('task_types').select('*');
-    if (!error && data) {
-      setTaskTypes(data);
-    }
-  };
-
+  // Hent ansatte og arbeidstyper når siden er klar
   useEffect(() => {
     fetchEmployees();
     fetchTasksTypes();
@@ -87,6 +77,10 @@ export default function RegisterPage() {
       fetchTasksTypes();
     }
   };
+
+  if (loading) {
+    return <p className="p-8 text-center">Laster inn...</p>;
+  }
 
   return (
     <div className="p-8 max-w-xl mx-auto">
