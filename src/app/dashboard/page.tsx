@@ -21,7 +21,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const getUser = async () => {
-            const { data, error } = await supabase.auth.getUser()
+            const { data } = await supabase.auth.getUser()
             if (data?.user) {
                 setUserEmail(data.user.email || '')
             } else {
