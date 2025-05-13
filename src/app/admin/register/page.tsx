@@ -13,13 +13,16 @@ const supabase = createClient(
 export default function RegisterPage() {
   const router = useRouter();
 
+  type Employee = { id: string; name: string };
+  type TaskType = { id: string; name: string; unit: string };
+
   // Hooks skal alltid være på toppen
   const [loading, setLoading] = useState(true);
   const [employeeName, setEmployeeName] = useState('');
-  const [employees, setEmployees] = useState<any[]>([]);
   const [taskName, setTaskName] = useState('');
   const [unit, setUnit] = useState('');
-  const [taskTypes, setTaskTypes] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
 
   // Må defineres før bruk
   const fetchEmployees = async () => {
