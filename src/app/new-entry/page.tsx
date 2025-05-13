@@ -4,16 +4,24 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 
+type FormFields = {
+  employee_name: string
+  task_type: string
+  project: string
+  efficiency: string
+  unit_type: string
+}
+
 export default function NewEntryPage() {
-  const [form, setForm] = useState({
-    employee_name: '',
-    task_type: '',
-    project: '',
-    efficiency: '',
-    unit_type: '',
-  })
+  const [form, setForm] = useState<FormFields>({
+  employee_name: '',
+  task_type: '',
+  project: '',
+  efficiency: '',
+  unit_type: '',
+})
+
   const [message, setMessage] = useState('')
-  const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -99,7 +107,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <input
             key={field}
             name={field}
-            value={(form as any)[field]}
+            value={form[field as keyof FormFields]}
             onChange={handleChange}
             placeholder={field.replace('_', ' ')}
             className="w-full p-2 border rounded"
