@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 
+type Employee = {
+  id: string;
+  name: string;
+};
+
 export default function EmployeesPage() {
-  const [uniqueEmployees, setUniqueEmployees] = useState<any[]>([])
+  const [uniqueEmployees, setUniqueEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
     async function fetchEmployees() {
@@ -17,7 +22,7 @@ export default function EmployeesPage() {
         console.error('Feil ved henting av ansatte:', error)
       } else {
         const seenNames = new Set()
-        const unique: any[] = []
+        const unique: Employee[] = []
 
         for (const emp of data) {
           // Rens navnet: trim, gjør til små bokstaver, fjern ekstra mellomrom
